@@ -1,0 +1,88 @@
+[tool.ruff]
+target-version = "py311" 
+
+
+# Exclude common Django directories and virtual environments.
+exclude = [
+    ".bzr",
+    ".direnv",
+    ".eggs",
+    ".git",
+    ".git-rewrite",
+    ".hg",
+    ".mypy_cache",
+    ".nox",
+    ".pants.d",
+    ".pytype",
+    ".ruff_cache",
+    ".svn",
+    ".tox",
+    ".venv",
+    "venv",
+    "__pypackages__",
+    "_build",
+    "buck-out",
+    "build",
+    "dist",
+    "node_modules",
+    "**/migrations/*", # Exclude Django migration files
+    "**/static/*",    # Exclude static files
+    "manage.py",      # Often doesn't need strict linting on boilerplate
+]
+
+line-length = 88
+indent-width = 4
+
+[tool.ruff.lint]
+# Enable Pyflakes (F) and a subset of pycodestyle (E) codes by default.
+# Add other rule sets as needed.
+# For Django, consider flake8-django (DJ).
+select = [
+    "E",  # pycodestyle errors
+    "W",  # pycodestyle warnings
+    "F",  # Pyflakes
+    "I",  # isort
+    "B",  # flake8-bugbear
+    "C4", # flake8-comprehensions
+    "UP", # pyupgrade
+    "DJ", # flake8-django
+    # "ANN", # flake8-annotations (Consider enabling if you want Ruff to enforce annotations)
+]
+
+# Optionally ignore specific rules.
+ignore = [
+    "E501", # Line too long (if you prefer to handle this with the formatter or manually)
+    # "DJ001", # Example: Ignore a specific Django rule if needed
+    # "DJ008", # models.TextField instead of CharField for model form fields with no max_length.
+    # "DJ013", # model_meta_attribute_should_be_tuple
+]
+
+# Allow autofix for all enabled rules (when `--fix`) is provided.
+fixable = ["ALL"]
+unfixable = []
+
+# Allow unused variables when underscore-prefixed.
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
+[tool.ruff.lint.per-file-ignores]
+# You can ignore rules for specific files or patterns
+# Example:
+# "settings.py" = ["E402"] # Module level import not at top of file (common in settings)
+# "**/__init__.py" = ["F401"] # Allow unused imports in __init__.py
+
+[tool.ruff.format]
+# Like Black, use double quotes for strings.
+quote-style = "double"
+# Like Black, indent with spaces, rather than tabs.
+indent-style = "space"
+# Like Black, respect magic trailing commas.
+skip-magic-trailing-comma = false
+# Like Black, automatically detect the appropriate line ending.
+line-ending = "auto"
+
+[tool.ruff.lint.isort]
+# Configure import sorting if you use Ruff for it.
+known-django = ["django"]
+known-first-party = ["core" . "."] # Replace with your app/project names
+sections = { "FUTURE" = ["__future__"], "STDLIB" = ["django", "..."], "THIRDPARTY" = [], "FIRSTPARTY" = ["core"], "LOCALFOLDER" = [] } # Customize as needed
+section-order = ["FUTURE", "STDLIB", "THIRDPARTY", "FIRSTPARTY", "LOCALFOLDER"]

@@ -1,0 +1,6 @@
+{
+  "include": ["core"],
+  "exclude": ["**/migrations", "**/static", "venv", ".venv"],
+  "pythonVersion": "3.x", 
+  "typeCheckingMode": "basic" 
+}
