@@ -118,14 +118,6 @@ class UniqueFileBackup(models.Model):
         help_text="Timestamp when this unique file content was first stored.",
     )
 
-    # Optional: Barcode data, if you want to keep it tied to the unique file content.
-    # Alternatively, a separate Barcode model linking to UniqueFileBackup.
-    barcode_data = models.JSONField(
-        null=True,
-        blank=True,
-        help_text="Structured data extracted from barcodes, if applicable.",
-    )
-
     def __str__(self):
         return f"Unique File (Hash: {self.file_hash[:10]}..., Stored: {self.stored_filename})"
 

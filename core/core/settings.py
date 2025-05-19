@@ -1,34 +1,35 @@
-import django_stubs_ext
 from pathlib import Path
-
-django_stubs_ext.monkeypatch()
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
-
-# SECURITY WARNING: keep the secret key used in production secret!
+# WARNING: keep the secret key used in production secret!
 SECRET_KEY = "django-insecure-em$^z*xc-6e88!yyl%21vylt&3&&%x(6ea^=6l9^$brp@eo$ne"
 
-# SECURITY WARNING: don't run with debug turned on in production!
+# WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+if DEBUG:
+    import django_stubs_ext
 
+    django_stubs_ext.monkeypatch()
 
-# Application definition
+ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
+
 
 INSTALLED_APPS = [
+    # -- Django Apps --
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    # -- My Apps --
+    "backup_manager",
+    # -- 3rd Party Apps --
+    # --  --
 ]
 
 MIDDLEWARE = [
