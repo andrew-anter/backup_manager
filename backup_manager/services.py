@@ -1,4 +1,5 @@
 import hashlib
+from django.utils import timezone
 import magic
 import logging
 import os
@@ -15,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 
 # -- Constants --
-DEDUPLICATED_BACKUP_SUBDIR = "deduplicated_backups"
+BACKUP_SUBDIR = "backup"
 
 # -- Helper Functions --
 
@@ -23,7 +24,7 @@ DEDUPLICATED_BACKUP_SUBDIR = "deduplicated_backups"
 def get_backup_storage_dir():
     """Gets the absolute path to the backup storage directory, creating it if necessary."""
     try:
-        base_dir = os.path.join(settings.MEDIA_ROOT, DEDUPLICATED_BACKUP_SUBDIR)
+        base_dir = os.path.join(settings.MEDIA_ROOT, BACKUP_SUBDIR)
         os.makedirs(base_dir, exist_ok=True)
         return base_dir
     except AttributeError:
@@ -195,3 +196,65 @@ def process_file_for_backup(
             # For simplicity, we don't update job.files_failed here to avoid another DB call in an error state.
             # This can be handled by the finalize_backup_job function.
             return None  # Indicate total failure to log this file instance
+
+
+def finalize_backup_job(job: BackupJob):
+    """
+    Finalizes a backup job, updating its status and end time.
+    """
+    # Refresh job object from DB to get latest counts
+    job.refresh_from_db()
+
+    # Determine overall job status based on counts
+    if job.files_failed > 0 and job.files_processed_successfully > 0:
+        job.status = BackupJob.JobStatus.PARTIALLY_COMPLETED
+    elif job.files_failed > 0 and job.files_processed_successfully == 0:
+        # If all intended files failed (and total_files_intended was set)
+        if (
+            job.total_files_intended > 0
+            and job.files_failed == job.total_files_intended
+        ):
+            job.status = BackupJob.JobStatus.FAILED
+        # If some files were processed (e.g. skipped) but others failed
+        elif job.files_failed > 0:
+            job.status = (
+                BackupJob.JobStatus.PARTIALLY_COMPLETED
+            )  # Or FAILED if no successes at all
+        else:  # Default to FAILED if only failures are recorded
+            job.status = BackupJob.JobStatus.FAILED
+
+    elif (
+        job.files_failed == 0
+        and job.total_files_intended > 0
+        and job.files_processed_successfully == job.total_files_intended
+    ):
+        job.status = BackupJob.JobStatus.COMPLETED
+    elif (
+        job.files_failed == 0
+        and job.files_processed_successfully > 0
+        and job.total_files_intended == 0
+    ):
+        # Job completed but total_files_intended was not set, assume all processed were intended
+        job.status = BackupJob.JobStatus.COMPLETED
+    else:
+        # If job is still marked IN_PROGRESS but no more files are coming,
+        # and it's not clearly completed or failed based on counts.
+        # This might indicate an incomplete job or an issue with tracking total_files_intended.
+        # For now, if there are successes and no failures, mark as completed.
+        if job.files_processed_successfully > 0 and job.files_failed == 0:
+            job.status = BackupJob.JobStatus.COMPLETED
+        elif (
+            job.status == BackupJob.JobStatus.IN_PROGRESS
+        ):  # If still in progress and counts don't make it complete/failed
+            logger.warning(
+                f"Backup Job {job.job_id} finalized with status IN_PROGRESS and unclear completion state based on counts. Review manually."
+            )
+            job.status = (
+                BackupJob.JobStatus.PARTIALLY_COMPLETED
+            )  # Or some other review state
+
+    job.end_time = timezone.now()
+    job.save()
+    logger.info(
+        f"Finalized Backup Job: {job.job_id} with status {job.get_status_display()}"  # type: ignore
+    )
