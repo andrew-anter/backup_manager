@@ -148,7 +148,8 @@ class BackupFileLog(models.Model):
         FAILED_HASH = "FAIL_HASH", "Failed (Hashing Error)"
         FAILED_COPY = "FAIL_COPY", "Failed (File Copy Error)"
         FAILED_DB = "FAIL_DB", "Failed (Database Error)"
-        SKIPPED = "SKIPPED", "Skipped"  # e.g., if file was 0 bytes or not a PDF
+        FAILED = "FAILED", "Failed (General Error)"
+        SKIPPED = "SKIPPED", "Skipped"  # e.g., if file was 0 bytes
 
     log_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     job = models.ForeignKey(
@@ -175,7 +176,7 @@ class BackupFileLog(models.Model):
     notes_for_job = models.TextField(blank=True, null=True)
 
     def __str__(self):
-        return f"Log: {self.original_filename} in Job {self.job.job_id} ({self.get_status_in_job_display()})"
+        return f"Log: {self.original_filename} in Job {self.job.job_id} ({self.get_status_in_job_display()})"  # type: ignore
 
     class Meta:
         ordering = ["-processed_at"]
